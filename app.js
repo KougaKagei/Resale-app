@@ -424,7 +424,7 @@ async function doSignup(){
   const email=$('a_email').value.trim(), password=$('a_pass').value;
   if(!email || password.length<6){ $('a_msg').textContent='メールアドレスと6文字以上のパスワードを入れてから押してください。'; return; }
   $('a_msg').textContent='作成中…';
-  const {data,error}=await S.sb.auth.signUp({email,password});
+  const {data,error}=await S.sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
   if(error){ $('a_msg').textContent = /not allowed|disabled/i.test(error.message) ? '新しいアカウントの作成は止められています。' : 'アカウントを作れませんでした：'+error.message; return; }
   if(!data.session) $('a_msg').textContent='確認メールを送りました。メールのリンクを押してから、ここでログインしてください。';
 }

@@ -1,6 +1,6 @@
 // 画面のファイルを保存しておき、電波が弱い場所でもアプリを開けるようにする。
 // データ（Supabase）は保存しない。ファイルを更新したら VERSION を上げる。
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'vendor/supabase.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/apple-touch-icon.png', 'icons/icon-192.png'];
 
