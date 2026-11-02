@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>仕入れ帳</title>
+<meta name="theme-color" content="#1D6648" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101613" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="仕入れ帳">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="auth" class="auth" hidden>
+  <form class="authbox" id="authForm" autocomplete="on">
+    <img src="icons/icon.svg" alt="" width="72" height="72" class="authicon">
+    <h1>仕入れ帳</h1>
+    <p class="sub">カナダ仕入れ → メルカリ販売の帳簿</p>
+    <div class="f"><label for="a_email">メールアドレス</label><input id="a_email" type="email" autocomplete="username" required></div>
+    <div class="f"><label for="a_pass">パスワード（6文字以上）</label><input id="a_pass" type="password" autocomplete="current-password" minlength="6" required></div>
+    <button class="btn primary block" type="submit" id="a_login">ログイン</button>
+    <button class="btn block" type="button" id="a_signup">はじめて使う（アカウント作成）</button>
+    <p class="sub" id="a_msg" role="status"></p>
+  </form>
+</section>
+
+<section id="setup" class="auth" hidden>
+  <div class="authbox">
+    <h1>接続の設定がまだです</h1>
+    <p class="sub"><code>config.js</code> に Supabase の Project URL と anon キーを入れてください。手順は README にあります。</p>
+  </div>
+</section>
+
+<div id="app" hidden>
+<header class="top">
+  <div class="wrap brandrow">
+    <h1>仕入れ帳<span>CA → JP</span></h1>
+    <div class="rate num" id="rateLabel">1 CAD = — 円</div>
+  </div>
+</header>
+
+<div class="wrap">
+<main>
+  <div class="banner" id="statusBanner" hidden></div>
+
+  <!-- DASHBOARD -->
+  <section data-panel="dashboard" hidden>
+    <div class="stack">
+      <div class="goals">
+        <div class="panel goal">
+          <div class="eyebrow" id="monthLabel">今月の利益</div>
+          <div class="big num" id="gProfit">¥0</div>
+          <div class="sub" id="gProfitSub">目標未設定</div>
+          <div class="bar" id="gProfitBar"><i style="width:0"></i></div>
+        </div>
+        <div class="panel goal">
+          <div class="eyebrow">今月の売上（販売価格の合計）</div>
+          <div class="big num" id="gSales">¥0</div>
+          <div class="sub" id="gSalesSub">目標未設定</div>
+          <div class="bar" id="gSalesBar"><i style="width:0"></i></div>
+        </div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="panel chart">
+        <h2>月別の純利益（直近6か月）</h2>
+        <div id="chart"></div>
+      </div>
+      <div class="panel">
+        <h2>ブランド別の成績（売却済み）</h2>
+        <div class="tablewrap" id="brandTable"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ITEMS -->
+  <section data-panel="items" hidden>
+    <div class="stack">
+      <div class="toolbar">
+        <div class="seg" id="statusFilter" role="group" aria-label="状態で絞り込み">
+          <button type="button" data-f="all" aria-pressed="true">すべて</button>
+          <button type="button" data-f="stock" aria-pressed="false">在庫</button>
+          <button type="button" data-f="listed" aria-pressed="false">出品中</button>
+          <button type="button" data-f="sold" aria-pressed="false">売却済</button>
+        </div>
+        <div class="seg" id="viewMode" role="group" aria-label="表示">
+          <button type="button" data-v="list" aria-pressed="true">リスト</button>
+          <button type="button" data-v="grid" aria-pressed="false">写真</button>
+        </div>
+        <input class="search" id="search" type="search" placeholder="ブランド・品名・色で検索">
+      </div>
+      <div class="sub" id="itemsSummary"></div>
+      <div class="list" id="itemList"></div>
+    </div>
+    <button class="fab" id="addItem" type="button" aria-label="仕入れを追加">＋</button>
+  </section>
+
+  <!-- MARKET -->
+  <section data-panel="market" hidden>
+    <div class="stack">
+      <div class="panel">
+        <h2>相場を調べる</h2>
+        <p class="sub" style="margin:0 0 12px">条件を入れてメルカリの<b>売り切れ</b>一覧を開き、見つけた売却価格をそのまま下に貼り付けてください。「¥12,800」のような書き方でも数字だけ拾います。</p>
+        <div class="grid">
+          <div class="f"><label for="m_brand">ブランド</label><input id="m_brand" placeholder="Patagonia"></div>
+          <div class="f"><label for="m_model">モデル・品名</label><input id="m_model" placeholder="レトロX"></div>
+          <div class="f"><label for="m_color">色・柄</label><input id="m_color" placeholder="ナチュラル"></div>
+          <div class="f"><label for="m_size">サイズ</label><input id="m_size" placeholder="M"></div>
+          <div class="f wide"><label for="m_kw">検索キーワード（自動作成・手で直せます）</label><input id="m_kw"></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <a class="btn primary" id="m_sold" href="https://jp.mercari.com/" target="_blank" rel="noopener">メルカリで売り切れを見る ↗</a>
+          <a class="btn" id="m_sale" href="https://jp.mercari.com/" target="_blank" rel="noopener">出品中を見る ↗</a>
+        </div>
+        <div class="f wide" style="margin-top:14px"><label for="m_prices">売却価格を貼り付け</label>
+          <textarea id="m_prices" placeholder="例：¥18,500  ¥16,000  ¥21,000 …"></textarea></div>
+        <div class="stats" id="m_stats" style="margin-top:12px"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary" type="button" id="m_save">相場として保存</button>
+          <button class="btn" type="button" id="m_reset">入力をクリア</button>
+          <span class="sub" id="m_editing"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>いくらまでなら仕入れていい？</h2>
+        <div class="grid">
+          <div class="f"><label for="b_price">想定販売価格（円）</label><input id="b_price" type="number" inputmode="numeric" placeholder="上の中央値が入ります"></div>
+          <div class="f"><label for="b_margin">欲しい利益率（%）</label><input id="b_margin" type="number" inputmode="numeric" value="30"></div>
+          <div class="f"><label for="b_ship">国際送料・関税（1点あたり円）</label><input id="b_ship" type="number" inputmode="numeric" value="1500"></div>
+          <div class="f"><label for="b_dom">国内送料（円）</label><input id="b_dom" type="number" inputmode="numeric"></div>
+        </div>
+        <div class="maxbuy"><span class="sub">仕入れ上限</span><b id="b_out">—</b><span class="sub num" id="b_outjpy"></span></div>
+        <p class="sub" style="margin:4px 0 0">販売価格 − メルカリ手数料 − 国内送料 − 国際送料・関税 − 欲しい利益 を、設定の為替レートでCADに換算した金額です。</p>
+      </div>
+
+      <div class="panel">
+        <h2>保存した相場</h2>
+        <div class="tablewrap" id="compTable"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREFS -->
+  <section data-panel="prefs" hidden>
+    <div class="stack">
+      <form class="panel" id="prefsForm">
+        <h2>設定・目標</h2>
+        <div class="stack">
+          <fieldset><legend>資金</legend>
+            <div class="grid">
+              <div class="f"><label for="p_capital">投資額（この事業に入れたお金・円）</label><input id="p_capital" type="number" inputmode="numeric"></div>
+            </div>
+          </fieldset>
+          <fieldset><legend>目標</legend>
+            <div class="grid">
+              <div class="f"><label for="p_goalProfit">月の利益目標（円）</label><input id="p_goalProfit" type="number" inputmode="numeric"></div>
+              <div class="f"><label for="p_goalSales">月の売上目標（円）</label><input id="p_goalSales" type="number" inputmode="numeric"></div>
+            </div>
+          </fieldset>
+          <fieldset><legend>計算の前提</legend>
+            <div class="grid">
+              <div class="f"><label for="p_rate">為替レート（1 CAD = 円）</label><input id="p_rate" type="number" step="0.01" inputmode="decimal"></div>
+              <div class="f"><label for="p_fee">メルカリ手数料（%）</label><input id="p_fee" type="number" step="0.1" inputmode="decimal"></div>
+              <div class="f"><label for="p_dom">国内送料の初期値（円）</label><input id="p_dom" type="number" inputmode="numeric"></div>
+            </div>
+            <div class="row"><button class="btn small" type="button" id="fetchRate">最新の為替レートを取得</button><span class="sub" id="rateNote"></span></div>
+            <p class="sub" style="margin:0">レートは新しく登録する商品に使われます。登録済みの商品は仕入れた時のレートのままです。</p>
+          </fieldset>
+          <div class="row"><button class="btn primary" type="submit">保存</button></div>
+        </div>
+      </form>
+      <div class="panel">
+        <h2>アカウント・データ</h2>
+        <p class="sub" id="whoami" style="margin:0 0 10px"></p>
+        <div class="row">
+          <button class="btn" type="button" id="exportBtn">バックアップを書き出す（JSON）</button>
+          <label class="btn" for="importFile">バックアップから読み込む</label>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+          <button class="btn danger" type="button" id="logout">ログアウト</button>
+        </div>
+        <p class="sub" id="importNote" style="margin:8px 0 0"></p>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<nav class="tabbar" aria-label="画面">
+  <a href="#dashboard" data-view="dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>ホーム</span></a>
+  <a href="#items" data-view="items"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12.5V4a1 1 0 0 1 1-1h8.5L21 11.5 12.5 20z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="7.5" cy="7.5" r="1.6" fill="currentColor"/></svg><span>商品</span></a>
+  <a href="#market" data-view="market"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>相場</span></a>
+  <a href="#prefs" data-view="prefs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>設定</span></a>
+</nav>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <form class="box" id="itemForm" autocomplete="off">
+    <div class="sheethead">
+      <h2 id="sheetTitle">仕入れを追加</h2>
+      <button class="btn small" type="button" id="closeSheet">閉じる</button>
+    </div>
+    <fieldset><legend>写真</legend>
+      <div class="photos" id="i_photos"></div>
+      <input type="file" id="i_file" accept="image/*" multiple hidden>
+      <span class="sub" id="phNote"></span>
+    </fieldset>
+    <fieldset><legend>商品</legend>
+      <div class="grid">
+        <div class="f"><label for="i_brand">ブランド</label><input id="i_brand" list="brands" required></div>
+        <div class="f"><label for="i_name">品名・モデル</label><input id="i_name" required></div>
+        <div class="f"><label for="i_category">カテゴリ</label><input id="i_category" list="cats" placeholder="フリース"></div>
+        <div class="f"><label for="i_color">色・柄</label><input id="i_color"></div>
+        <div class="f"><label for="i_size">サイズ</label><input id="i_size"></div>
+        <div class="f"><label for="i_condition">状態</label>
+          <select id="i_condition"><option>新品・タグ付き</option><option>未使用に近い</option><option selected>目立った傷や汚れなし</option><option>やや傷や汚れあり</option><option>傷や汚れあり</option></select></div>
+        <div class="f"><label for="i_status">ステータス</label>
+          <select id="i_status"><option value="stock">在庫</option><option value="listed">出品中</option><option value="sold">売却済</option></select></div>
+      </div>
+    </fieldset>
+    <fieldset><legend>仕入れ（カナダ）</legend>
+      <div class="grid">
+        <div class="f"><label for="i_buyDate">仕入れ日</label><input id="i_buyDate" type="date"></div>
+        <div class="f"><label for="i_costCAD">仕入れ値（CAD）</label><input id="i_costCAD" type="number" step="0.01" inputmode="decimal"></div>
+        <div class="f"><label for="i_rate">レート（1 CAD = 円）</label><input id="i_rate" type="number" step="0.01" inputmode="decimal"></div>
+        <div class="f"><label for="i_intl">国際送料の按分（円）</label><input id="i_intl" type="number" inputmode="numeric"></div>
+        <div class="f"><label for="i_duty">関税・消費税（円）</label><input id="i_duty" type="number" inputmode="numeric"></div>
+        <div class="f"><label for="i_other">その他経費（円）</label><input id="i_other" type="number" inputmode="numeric" placeholder="クリーニング等"></div>
+      </div>
+    </fieldset>
+    <fieldset><legend>販売（メルカリ）</legend>
+      <div class="grid">
+        <div class="f"><label for="i_listPrice">出品価格（円）</label><input id="i_listPrice" type="number" inputmode="numeric"></div>
+        <div class="f"><label for="i_soldPrice">売れた価格（円）</label><input id="i_soldPrice" type="number" inputmode="numeric"></div>
+        <div class="f"><label for="i_soldDate">売れた日</label><input id="i_soldDate" type="date"></div>
+        <div class="f"><label for="i_dom">国内送料（円）</label><input id="i_dom" type="number" inputmode="numeric"></div>
+        <div class="f"><label for="i_fee">手数料（%）</label><input id="i_fee" type="number" step="0.1" inputmode="decimal"></div>
+        <div class="f wide"><label for="i_notes">メモ</label><input id="i_notes" placeholder="Facebookの出品者、場所、気づいた点など"></div>
+      </div>
+    </fieldset>
+    <div class="calc" id="i_calc"></div>
+    <div class="row" id="i_compRow"></div>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn danger" type="button" id="delItem" hidden>削除</button>
+      <div class="row" style="margin-left:auto">
+        <button class="btn" type="button" id="cancelItem">キャンセル</button>
+        <button class="btn primary" type="submit" id="saveItemBtn">保存</button>
+      </div>
+    </div>
+  </form>
+</div>
+<datalist id="cats"><option>フリース</option><option>ダウン</option><option>ジャケット</option><option>パーカー</option><option>シャツ</option><option>パンツ</option><option>バッグ</option><option>小物</option></datalist>
+<datalist id="brands"></datalist>
+<div class="toast" id="toast" hidden></div>
+<div class="lightbox" id="lightbox" hidden><img id="lightImg" alt="商品写真"></div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

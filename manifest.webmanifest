@@ -1,0 +1,17 @@
+{
+  "name": "仕入れ帳",
+  "short_name": "仕入れ帳",
+  "description": "カナダで仕入れてメルカリで売る商品の原価・利益・在庫・相場を管理する帳簿",
+  "lang": "ja",
+  "start_url": "./#dashboard",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EEF2EF",
+  "theme_color": "#1D6648",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
