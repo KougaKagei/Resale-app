@@ -20,14 +20,14 @@ iPhone のホーム画面に入れると、普通のアプリと同じように�
 | `config.js` | Supabase の接続情報 |
 | `sw.js` / `manifest.webmanifest` / `icons/` | ホーム画面アプリ用の設定とアイコン |
 | `supabase/schema.sql` | データベースと写真置き場の設定 |
-| `vendor/supabase.js` | Supabase のライブラリ（v2.45.4） |
+| `vendor/supabase.js` | Supabase のライブラリ（v2.79.0） |
 
 ## セットアップ
 
 ### 1. Supabase
 1. プロジェクトを作る（Region は Tokyo）
 2. 左メニュー **SQL Editor** → `supabase/schema.sql` の中身を全部貼り付けて **Run**
-3. **Project Settings → API** の Project URL と anon public キーを `config.js` に入れる
+3. **Project Settings → API** の Project URL と publishable キーを `config.js` に入れる
 4. **Authentication → URL Configuration** の Site URL に、公開したアプリの URL を入れる（確認メールのリンク先）
 
 ### 2. 公開（Vercel）
